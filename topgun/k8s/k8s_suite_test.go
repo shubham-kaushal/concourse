@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -65,9 +66,6 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 
 	By("Checking if kubectl has a context set for port forwarding later")
 	Wait(Start(nil, "kubectl", "config", "current-context"))
-
-	By("Initializing the client side of helm")
-	Wait(Start(nil, "helm", "init", "--client-only"))
 
 	By("Updating the dependencies of the Concourse chart locally")
 	Wait(Start(nil, "helm", "dependency", "update", parsedEnv.ConcourseChartDir))
@@ -266,6 +264,8 @@ func portForward(namespace, resource, port string) (*gexec.Session, string) {
 }
 
 func helmDeploy(releaseName, namespace, chartDir string, args ...string) *gexec.Session {
+	createNamespace(namespace)
+
 	helmArgs := []string{
 		"upgrade",
 		"--install",
@@ -316,10 +316,11 @@ func deployConcourseChart(releaseName string, args ...string) {
 	Expect(sess.ExitCode()).To(Equal(0))
 }
 
-func helmDestroy(releaseName string) {
+func helmDestroy(releaseName, namespace string) {
 	helmArgs := []string{
 		"delete",
-		"--purge",
+		"--namespace",
+		namespace,
 		releaseName,
 	}
 
@@ -413,7 +414,7 @@ func waitAndLogin(namespace, service string) Endpoint {
 }
 
 func cleanup(releaseName, namespace string) {
-	helmDestroy(releaseName)
+	helmDestroy(releaseName, namespace)
 	Run(nil, "kubectl", "delete", "namespace", namespace, "--wait=false")
 }
 
@@ -441,4 +442,15 @@ func onGke(f func()) {
 
 		f()
 	})
+}
+
+func createNamespace(namespace string) {
+	createNs := exec.Command("kubectl", "create", "namespace", namespace, "--dry-run", "-o", "yaml")
+	namespaceYaml, err := createNs.Output()
+	Expect(err).ToNot(HaveOccurred())
+
+	applyNamespace := exec.Command("kubectl", "apply", "-f", "-")
+	applyNamespace.Stdin = bytes.NewReader(namespaceYaml)
+	err = applyNamespace.Run()
+	Expect(err).ToNot(HaveOccurred())
 }
