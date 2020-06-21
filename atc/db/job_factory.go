@@ -267,7 +267,8 @@ func (d dashboardFactory) BuildDashboard() (atc.Dashboard, error) {
 }
 
 func (d dashboardFactory) constructJobsForDashboard() (atc.Dashboard, error) {
-	rows, err := psql.Select("j.id", "j.name", "p.name", "j.paused", "j.has_new_inputs", "j.tags", "tm.name",
+	rows, err := psql.Select("j.id", "j.name", "p.name", "p.public",
+		"j.paused", "j.has_new_inputs", "j.tags", "tm.name",
 		"l.id", "l.name", "l.status", "l.start_time", "l.end_time",
 		"n.id", "n.name", "n.status", "n.start_time", "n.end_time",
 		"t.id", "t.name", "t.status", "t.start_time", "t.end_time").
@@ -304,7 +305,8 @@ func (d dashboardFactory) constructJobsForDashboard() (atc.Dashboard, error) {
 		)
 
 		j := atc.DashboardJob{}
-		err = rows.Scan(&j.ID, &j.Name, &j.PipelineName, &j.Paused, &j.HasNewInputs, pq.Array(&j.Groups), &j.TeamName,
+		err = rows.Scan(&j.ID, &j.Name, &j.PipelineName, &j.PipelinePublic,
+			&j.Paused, &j.HasNewInputs, pq.Array(&j.Groups), &j.TeamName,
 			&f.id, &f.name, &f.status, &f.startTime, &f.endTime,
 			&n.id, &n.name, &n.status, &n.startTime, &n.endTime,
 			&t.id, &t.name, &t.status, &t.startTime, &t.endTime)

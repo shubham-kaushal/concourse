@@ -5,12 +5,13 @@ import "time"
 type Dashboard []DashboardJob
 
 type DashboardJob struct {
-	ID           int
-	Name         string
-	PipelineName string
-	TeamName     string
-	Paused       bool
-	HasNewInputs bool
+	ID             int
+	Name           string
+	PipelineName   string
+	PipelinePublic bool
+	TeamName       string
+	Paused         bool
+	HasNewInputs   bool
 
 	FinishedBuild   *DashboardBuild
 	NextBuild       *DashboardBuild
