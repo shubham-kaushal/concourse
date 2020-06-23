@@ -11,6 +11,7 @@ import (
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/concourse/concourse/atc/api/jobserver/jobserverfakes"
 
 	"github.com/concourse/concourse/atc/api"
 	"github.com/concourse/concourse/atc/api/accessor"
@@ -68,6 +69,7 @@ var (
 	cliDownloadsDir         string
 	logger                  *lagertest.TestLogger
 	fakeClock               *fakeclock.FakeClock
+	fakeListAllJobsWatcher  *jobserverfakes.FakeListAllJobsWatcher
 
 	constructedEventHandler *fakeEventHandlerFactory
 
@@ -136,6 +138,8 @@ var _ = BeforeEach(func() {
 	credsManagers = make(creds.Managers)
 
 	fakeClock = fakeclock.NewFakeClock(time.Unix(123, 456))
+
+	fakeListAllJobsWatcher = new(jobserverfakes.FakeListAllJobsWatcher)
 
 	var err error
 	cliDownloadsDir, err = ioutil.TempDir("", "cli-downloads")
@@ -211,6 +215,7 @@ var _ = BeforeEach(func() {
 		time.Second,
 		dbWall,
 		fakeClock,
+		fakeListAllJobsWatcher,
 	)
 
 	Expect(err).NotTo(HaveOccurred())
