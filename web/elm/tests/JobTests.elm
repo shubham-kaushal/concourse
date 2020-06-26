@@ -68,18 +68,11 @@ all =
 
                 someJob : Concourse.Job
                 someJob =
-                    { name = "some-job"
-                    , pipelineName = "some-pipeline"
-                    , teamName = "some-team"
-                    , nextBuild = Nothing
-                    , finishedBuild = Just someBuild
-                    , transitionBuild = Nothing
-                    , paused = False
-                    , disableManualTrigger = False
-                    , inputs = []
-                    , outputs = []
-                    , groups = []
-                    }
+                    Data.job 0 0
+                        |> Data.withName "some-job"
+                        |> Data.withPipelineName "some-pipeline"
+                        |> Data.withTeamName "some-team"
+                        |> Data.withFinishedBuild (Just someBuild)
 
                 defaultModel : Job.Model
                 defaultModel =
@@ -111,18 +104,14 @@ all =
                         |> Application.handleCallback
                             (JobFetched <|
                                 Ok
-                                    { name = "job"
-                                    , pipelineName = "pipeline"
-                                    , teamName = "team"
-                                    , nextBuild = Nothing
-                                    , finishedBuild = Just someBuild
-                                    , transitionBuild = Nothing
-                                    , paused = paused
-                                    , disableManualTrigger = disabled
-                                    , inputs = []
-                                    , outputs = []
-                                    , groups = []
-                                    }
+                                    (Data.job 0 0
+                                        |> Data.withName "job"
+                                        |> Data.withPipelineName "pipeline"
+                                        |> Data.withTeamName "team"
+                                        |> Data.withFinishedBuild (Just someBuild)
+                                        |> Data.withDisableManualTrigger disabled
+                                        |> Data.withPaused paused
+                                    )
                             )
                         |> Tuple.first
 
