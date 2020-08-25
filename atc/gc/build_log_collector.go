@@ -91,28 +91,15 @@ func (br *buildLogCollector) reapLogsOfJob(pipeline db.Pipeline,
 	}
 
 	buildsToConsiderDeleting := []db.Build{}
-	// FirstLoggedBuildID points to the smallest build id that is not reaped.
-	// We will use db.Page as query criteria to fetch builds, and "Until" is
-	// excluded, thus until should be FirstLoggedBuildID-1.
-	until := job.FirstLoggedBuildID() - 1
-	if until < 0 {
-		until = 0
-	}
-	limit := br.batchSize
 
-	returnedBatch := br.batchSize
-	for returnedBatch == br.batchSize {
-		// Returned builds will be ordered by id desc.
-		builds, _, err := job.Builds(
-			db.Page{Until: until, Limit: limit},
-		)
+	from := job.FirstLoggedBuildID()
+	limit := br.batchSize
+	page := &db.Page{From: from, Limit: limit}
+	for page != nil {
+		builds, pagination, err := job.Builds(*page)
 		if err != nil {
 			logger.Error("failed-to-get-job-builds-to-delete", err)
 			return err
-		}
-		returnedBatch = len(builds)
-		if returnedBatch == 0 {
-			break
 		}
 
 		buildsOfBatch := []db.Build{}
@@ -126,7 +113,7 @@ func (br *buildLogCollector) reapLogsOfJob(pipeline db.Pipeline,
 		}
 		buildsToConsiderDeleting = append(buildsOfBatch, buildsToConsiderDeleting...)
 
-		until = builds[0].ID()
+		page = pagination.Next
 	}
 
 	logger.Debug("after-first-round-filter", lager.Data{

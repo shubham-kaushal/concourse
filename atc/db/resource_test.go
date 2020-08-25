@@ -1159,7 +1159,7 @@ var _ = Describe("Resource", func() {
 				Expect(reloaded).To(BeTrue())
 			})
 
-			Context("with no since/until", func() {
+			Context("with no from/to", func() {
 				It("returns the first page, with the given limit, and a next page", func() {
 					historyPage, pagination, found, err := resource.Versions(db.Page{Limit: 2}, nil)
 					Expect(err).ToNot(HaveOccurred())
@@ -1168,59 +1168,59 @@ var _ = Describe("Resource", func() {
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[9].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[8].Version))
 					Expect(pagination.Previous).To(BeNil())
-					Expect(pagination.Next).To(Equal(&db.Page{Since: resourceVersions[8].ID, Limit: 2}))
+					Expect(pagination.Next).To(Equal(&db.Page{To: resourceVersions[8].ID, Limit: 2}))
 				})
 			})
 
-			Context("with a since that places it in the middle of the builds", func() {
+			Context("with a to that places it in the middle of the builds", func() {
 				It("returns the builds, with previous/next pages", func() {
-					historyPage, pagination, found, err := resource.Versions(db.Page{Since: resourceVersions[6].ID, Limit: 2}, nil)
+					historyPage, pagination, found, err := resource.Versions(db.Page{To: resourceVersions[6].ID, Limit: 2}, nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(len(historyPage)).To(Equal(2))
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[5].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[4].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: resourceVersions[5].ID, Limit: 2}))
-					Expect(pagination.Next).To(Equal(&db.Page{Since: resourceVersions[4].ID, Limit: 2}))
+					Expect(pagination.Previous).To(Equal(&db.Page{From: resourceVersions[5].ID, Limit: 2}))
+					Expect(pagination.Next).To(Equal(&db.Page{To: resourceVersions[4].ID, Limit: 2}))
 				})
 			})
 
-			Context("with a since that places it at the end of the builds", func() {
-				It("returns the builds, with previous/next pages", func() {
-					historyPage, pagination, found, err := resource.Versions(db.Page{Since: resourceVersions[2].ID, Limit: 2}, nil)
+			Context("with a to that places it at the end of the builds", func() {
+				It("returns the builds, with no next page", func() {
+					historyPage, pagination, found, err := resource.Versions(db.Page{To: resourceVersions[2].ID, Limit: 2}, nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(len(historyPage)).To(Equal(2))
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[1].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[0].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: resourceVersions[1].ID, Limit: 2}))
+					Expect(pagination.Previous).To(Equal(&db.Page{From: resourceVersions[1].ID, Limit: 2}))
 					Expect(pagination.Next).To(BeNil())
 				})
 			})
 
-			Context("with an until that places it in the middle of the builds", func() {
+			Context("with a from that places it in the middle of the builds", func() {
 				It("returns the builds, with previous/next pages", func() {
-					historyPage, pagination, found, err := resource.Versions(db.Page{Until: resourceVersions[6].ID, Limit: 2}, nil)
+					historyPage, pagination, found, err := resource.Versions(db.Page{From: resourceVersions[6].ID, Limit: 2}, nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(len(historyPage)).To(Equal(2))
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[8].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[7].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: resourceVersions[8].ID, Limit: 2}))
-					Expect(pagination.Next).To(Equal(&db.Page{Since: resourceVersions[7].ID, Limit: 2}))
+					Expect(pagination.Previous).To(Equal(&db.Page{From: resourceVersions[8].ID, Limit: 2}))
+					Expect(pagination.Next).To(Equal(&db.Page{To: resourceVersions[7].ID, Limit: 2}))
 				})
 			})
 
-			Context("with a until that places it at the beginning of the builds", func() {
-				It("returns the builds, with previous/next pages", func() {
-					historyPage, pagination, found, err := resource.Versions(db.Page{Until: resourceVersions[7].ID, Limit: 2}, nil)
+			Context("with a from that places it at the beginning of the builds", func() {
+				It("returns the builds, with no previous page", func() {
+					historyPage, pagination, found, err := resource.Versions(db.Page{From: resourceVersions[7].ID, Limit: 2}, nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(len(historyPage)).To(Equal(2))
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[9].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[8].Version))
 					Expect(pagination.Previous).To(BeNil())
-					Expect(pagination.Next).To(Equal(&db.Page{Since: resourceVersions[8].ID, Limit: 2}))
+					Expect(pagination.Next).To(Equal(&db.Page{To: resourceVersions[8].ID, Limit: 2}))
 				})
 			})
 
@@ -1373,7 +1373,7 @@ var _ = Describe("Resource", func() {
 				// ids ordered by check order now: [3, 2, 4, 1]
 			})
 
-			Context("with no since/until", func() {
+			Context("with no from/to", func() {
 				It("returns versions ordered by check order", func() {
 					historyPage, pagination, found, err := resource.Versions(db.Page{Limit: 4}, nil)
 					Expect(err).ToNot(HaveOccurred())
@@ -1388,19 +1388,6 @@ var _ = Describe("Resource", func() {
 				})
 			})
 
-			Context("with a since", func() {
-				It("returns the builds, with previous/next pages excluding since", func() {
-					historyPage, pagination, found, err := resource.Versions(db.Page{Since: 3, Limit: 2}, nil)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(found).To(BeTrue())
-					Expect(historyPage).To(HaveLen(2))
-					Expect(historyPage[0].Version).To(Equal(resourceVersions[2].Version))
-					Expect(historyPage[1].Version).To(Equal(resourceVersions[1].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: 2, Limit: 2}))
-					Expect(pagination.Next).To(Equal(&db.Page{Since: 4, Limit: 2}))
-				})
-			})
-
 			Context("with from", func() {
 				It("returns the builds, with previous/next pages including from", func() {
 					historyPage, pagination, found, err := resource.Versions(db.Page{From: 2, Limit: 2}, nil)
@@ -1409,21 +1396,8 @@ var _ = Describe("Resource", func() {
 					Expect(historyPage).To(HaveLen(2))
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[2].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[1].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: 2, Limit: 2}))
-					Expect(pagination.Next).To(Equal(&db.Page{Since: 4, Limit: 2}))
-				})
-			})
-
-			Context("with a until", func() {
-				It("returns the builds, with previous/next pages excluding until", func() {
-					historyPage, pagination, found, err := resource.Versions(db.Page{Until: 1, Limit: 2}, nil)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(found).To(BeTrue())
-					Expect(historyPage).To(HaveLen(2))
-					Expect(historyPage[0].Version).To(Equal(resourceVersions[2].Version))
-					Expect(historyPage[1].Version).To(Equal(resourceVersions[1].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: 2, Limit: 2}))
-					Expect(pagination.Next).To(Equal(&db.Page{Since: 4, Limit: 2}))
+					Expect(pagination.Previous).To(Equal(&db.Page{From: 2, Limit: 2}))
+					Expect(pagination.Next).To(Equal(&db.Page{To: 4, Limit: 2}))
 				})
 			})
 
@@ -1435,8 +1409,8 @@ var _ = Describe("Resource", func() {
 					Expect(historyPage).To(HaveLen(2))
 					Expect(historyPage[0].Version).To(Equal(resourceVersions[2].Version))
 					Expect(historyPage[1].Version).To(Equal(resourceVersions[1].Version))
-					Expect(pagination.Previous).To(Equal(&db.Page{Until: 2, Limit: 2}))
-					Expect(pagination.Next).To(Equal(&db.Page{Since: 4, Limit: 2}))
+					Expect(pagination.Previous).To(Equal(&db.Page{From: 2, Limit: 2}))
+					Expect(pagination.Next).To(Equal(&db.Page{To: 4, Limit: 2}))
 				})
 			})
 		})
