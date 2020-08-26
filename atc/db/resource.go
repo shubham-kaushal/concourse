@@ -436,7 +436,7 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 				AND v.check_order <= (SELECT check_order FROM resource_config_versions WHERE id = $2)
 			ORDER BY v.check_order DESC
 			LIMIT $3
-		`, query), r.id, page.From, page.Limit, filterJSON)
+		`, query), r.id, page.To, page.Limit, filterJSON)
 		if err != nil {
 			return nil, Pagination{}, false, err
 		}
@@ -499,21 +499,38 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 		return nil, Pagination{}, true, nil
 	}
 
-	var minCheckOrder int
-	var maxCheckOrder int
+	newestRCVCheckOrder := checkOrderRVs[0]
+	oldestRCVCheckOrder := checkOrderRVs[len(checkOrderRVs)-1]
 
+	var prevRCVId sql.NullInt64
+	var nextRCVId sql.NullInt64
+
+	// SELECT ( SELECT ...) generates a null value if row isn't found
 	err = tx.QueryRow(`
-		SELECT COALESCE(MAX(v.check_order), 0) as maxCheckOrder,
-			COALESCE(MIN(v.check_order), 0) as minCheckOrder
-		FROM resource_config_versions v, resources r
-		WHERE r.id = $1 AND v.resource_config_scope_id = r.resource_config_scope_id
-	`, r.id).Scan(&maxCheckOrder, &minCheckOrder)
+		SELECT (
+			SELECT v.id
+			FROM resource_config_versions v, resources r
+			WHERE v.check_order < $2 AND r.id = $1 AND v.resource_config_scope_id = r.resource_config_scope_id
+			ORDER BY v.check_order DESC
+			LIMIT 1
+		)
+	`, r.id, oldestRCVCheckOrder.CheckOrder).Scan(&nextRCVId)
 	if err != nil {
 		return nil, Pagination{}, false, err
 	}
 
-	firstRCVCheckOrder := checkOrderRVs[0]
-	lastRCVCheckOrder := checkOrderRVs[len(checkOrderRVs)-1]
+	err = tx.QueryRow(`
+		SELECT (
+			SELECT v.id
+			FROM resource_config_versions v, resources r
+			WHERE v.check_order > $2 AND r.id = $1 AND v.resource_config_scope_id = r.resource_config_scope_id
+			ORDER BY v.check_order ASC
+			LIMIT 1
+		)
+	`, r.id, newestRCVCheckOrder.CheckOrder).Scan(&prevRCVId)
+	if err != nil {
+		return nil, Pagination{}, false, err
+	}
 
 	err = tx.Commit()
 	if err != nil {
@@ -522,16 +539,16 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 
 	var pagination Pagination
 
-	if firstRCVCheckOrder.CheckOrder < maxCheckOrder {
+	if prevRCVId.Valid {
 		pagination.Previous = &Page{
-			To:    firstRCVCheckOrder.ResourceConfigVersionID - 1,
+			From:  int(prevRCVId.Int64),
 			Limit: page.Limit,
 		}
 	}
 
-	if lastRCVCheckOrder.CheckOrder > minCheckOrder {
+	if nextRCVId.Valid {
 		pagination.Next = &Page{
-			From:  lastRCVCheckOrder.ResourceConfigVersionID + 1,
+			To:    int(nextRCVId.Int64),
 			Limit: page.Limit,
 		}
 	}

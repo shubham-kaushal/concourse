@@ -789,12 +789,12 @@ permalink : List Concourse.VersionedResource -> Page
 permalink versionedResources =
     case List.head versionedResources of
         Nothing ->
-            { direction = Concourse.Pagination.Since 0
+            { direction = Concourse.Pagination.From 0
             , limit = 100
             }
 
         Just version ->
-            { direction = Concourse.Pagination.From version.id
+            { direction = Concourse.Pagination.To version.id
             , limit = List.length versionedResources
             }
 

@@ -2059,7 +2059,7 @@ var _ = Describe("Pipeline", func() {
 		Context("when providing boundaries", func() {
 
 			Context("only to", func() {
-				It("returns only those before to", func() {
+				It("returns only those before and including to", func() {
 					returnedBuilds, _, err := pipeline.BuildsWithTime(db.Page{
 						To:    int(builds[2].StartTime().Unix()),
 						Limit: 50,

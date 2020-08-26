@@ -41,12 +41,6 @@ params p =
         Just { direction, limit } ->
             [ Url.Builder.int "limit" limit
             , case direction of
-                Since since ->
-                    Url.Builder.int "since" since
-
-                Until until ->
-                    Url.Builder.int "limit" until
-
                 From from ->
                     Url.Builder.int "limit" from
 
@@ -149,7 +143,4 @@ parsePage url =
                         }
                     )
     in
-    tryDirection Until "until"
-        |> orElse (tryDirection Since "since")
-        |> orElse (tryDirection From "from")
-        |> orElse (tryDirection To "to")
+    tryDirection From "from" |> orElse (tryDirection To "to")

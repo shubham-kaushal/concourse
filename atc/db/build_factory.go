@@ -248,6 +248,8 @@ func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page P
 		reverse bool
 	)
 
+	origBuildsQuery := buildsQuery
+
 	tx, err := conn.Begin()
 	if err != nil {
 		return nil, Pagination{}, err
@@ -262,12 +264,12 @@ func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page P
 			OrderBy("COALESCE(b.rerun_of, b.id) DESC, b.id DESC")
 	} else if page.From != 0 && page.To == 0 { // only to
 		buildsQuery = buildsQuery.
-			Where(sq.Gt{"b.id": uint64(page.From)}).
+			Where(sq.GtOrEq{"b.id": uint64(page.From)}).
 			OrderBy("COALESCE(b.rerun_of, b.id) ASC, b.id ASC")
 		reverse = true
 	} else if page.From == 0 && page.To != 0 { // only since
 		buildsQuery = buildsQuery.
-			Where(sq.Lt{"b.id": page.To}).
+			Where(sq.LtOrEq{"b.id": page.To}).
 			OrderBy("COALESCE(b.rerun_of, b.id) DESC, b.id DESC")
 	} else if page.From != 0 && page.To != 0 { // both
 		if page.From > page.To {
@@ -276,8 +278,8 @@ func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page P
 
 		buildsQuery = buildsQuery.Where(
 			sq.And{
-				sq.Gt{"b.id": uint64(page.From)},
-				sq.Lt{"b.id": uint64(page.To)},
+				sq.GtOrEq{"b.id": uint64(page.From)},
+				sq.LtOrEq{"b.id": uint64(page.To)},
 			}).
 			OrderBy("COALESCE(b.rerun_of, b.id) ASC, b.id ASC")
 	}
@@ -310,13 +312,45 @@ func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page P
 		return builds, Pagination{}, nil
 	}
 
-	var minID, maxID int
-	err = minMaxIdQuery.
+	newestBuild := builds[0]
+	oldestBuild := builds[len(builds)-1]
+
+	var pagination Pagination
+
+	row := origBuildsQuery.
+		Where(sq.Lt{"b.id": oldestBuild.ID()}).
+		Limit(1).
+		RunWith(tx).
+		QueryRow()
+
+	build := newEmptyBuild(conn, lockFactory)
+	err = scanBuild(build, row, conn.EncryptionStrategy())
+	if err != nil && err != sql.ErrNoRows {
+		return builds, Pagination{}, err
+	} else if err == nil {
+		pagination.Next = &Page{
+			To:    build.id,
+			Limit: page.Limit,
+		}
+	}
+
+	// TODO: order by
+	builder := origBuildsQuery.
+		Where(sq.Gt{"b.id": newestBuild.ID()}).
+		Limit(1)
+	rawSQL, _, err := builder.ToSql()
+	fmt.Println("hello", rawSQL, err)
+	err = builder.
 		RunWith(tx).
 		QueryRow().
-		Scan(&maxID, &minID)
-	if err != nil {
-		return nil, Pagination{}, err
+		Scan(&prevBuildID)
+	if err != nil && err != sql.ErrNoRows {
+		return builds, Pagination{}, err
+	} else if err == nil {
+		pagination.Previous = &Page{
+			From:  prevBuildID,
+			Limit: page.Limit,
+		}
 	}
 
 	err = tx.Commit()
@@ -324,24 +358,6 @@ func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page P
 		return nil, Pagination{}, err
 	}
 
-	first := builds[0]
-	last := builds[len(builds)-1]
-
-	var pagination Pagination
 	// TODO: fix off-by-one in build_log_collector (and elsewhere?)
-	if first.ID() < maxID {
-		pagination.Previous = &Page{
-			From:  first.ID() + 1,
-			Limit: page.Limit,
-		}
-	}
-
-	if last.ID() > minID {
-		pagination.Next = &Page{
-			From:  last.ID() - 1,
-			Limit: page.Limit,
-		}
-	}
-
 	return builds, pagination, nil
 }

@@ -12,3 +12,7 @@ type Pagination struct {
 	Previous *Page
 	Next     *Page
 }
+
+func newIntPtr(i int) *int {
+	return &i
+}

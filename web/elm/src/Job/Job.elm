@@ -306,12 +306,12 @@ permalink : List Concourse.Build -> Page
 permalink builds =
     case List.head builds of
         Nothing ->
-            { direction = Concourse.Pagination.Since 0
+            { direction = Concourse.Pagination.From 0
             , limit = jobBuildsPerPage
             }
 
         Just build ->
-            { direction = Concourse.Pagination.Since (build.id + 1)
+            { direction = Concourse.Pagination.To build.id
             , limit = List.length builds
             }
 

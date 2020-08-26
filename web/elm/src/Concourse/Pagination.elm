@@ -34,21 +34,13 @@ type alias Page =
 
 
 type Direction
-    = Since Int
-    | Until Int
-    | From Int
+    = From Int
     | To Int
 
 
 directionEqual : Direction -> Direction -> Bool
 directionEqual d1 d2 =
     case ( d1, d2 ) of
-        ( Since p1, Since p2 ) ->
-            p1 == p2
-
-        ( Until p1, Until p2 ) ->
-            p1 == p2
-
         ( From p1, From p2 ) ->
             p1 == p2
 

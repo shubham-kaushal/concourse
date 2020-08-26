@@ -1131,7 +1131,7 @@ var _ = Describe("Team", func() {
 				Expect(builds[1]).To(Equal(allBuilds[3]))
 
 				Expect(pagination.Previous).To(BeNil())
-				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[3].ID(), Limit: 2}))
+				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[3].ID() - 1, Limit: 2}))
 
 				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Next)
 				Expect(err).ToNot(HaveOccurred())
@@ -1141,8 +1141,8 @@ var _ = Describe("Team", func() {
 				Expect(builds[0]).To(Equal(allBuilds[2]))
 				Expect(builds[1]).To(Equal(allBuilds[1]))
 
-				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[2].ID(), Limit: 2}))
-				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[1].ID(), Limit: 2}))
+				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[2].ID() + 1, Limit: 2}))
+				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[1].ID() - 1, Limit: 2}))
 
 				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Next)
 				Expect(err).ToNot(HaveOccurred())
@@ -1150,7 +1150,7 @@ var _ = Describe("Team", func() {
 				Expect(len(builds)).To(Equal(1))
 				Expect(builds[0]).To(Equal(allBuilds[0]))
 
-				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[0].ID(), Limit: 2}))
+				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[0].ID() + 1, Limit: 2}))
 				Expect(pagination.Next).To(BeNil())
 
 				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Previous)
@@ -1159,8 +1159,8 @@ var _ = Describe("Team", func() {
 				Expect(len(builds)).To(Equal(2))
 				Expect(builds[0]).To(Equal(allBuilds[2]))
 				Expect(builds[1]).To(Equal(allBuilds[1]))
-				Expect(pagination.Previous).To(Equal(&db.Page{To: allBuilds[2].ID(), Limit: 2}))
-				Expect(pagination.Next).To(Equal(&db.Page{From: allBuilds[1].ID(), Limit: 2}))
+				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[2].ID() + 1, Limit: 2}))
+				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[1].ID() - 1, Limit: 2}))
 			})
 
 			Context("when there are builds that belong to different teams", func() {
@@ -1396,18 +1396,18 @@ var _ = Describe("Team", func() {
 
 		Context("when limiting the range of build ids", func() {
 			Context("specifying only from", func() {
-				It("returns all builds after the specified id", func() {
+				It("returns all builds after and including the specified id", func() {
 					builds, _, err := team.Builds(db.Page{Limit: 50, From: secondBuild.ID()})
 					Expect(err).NotTo(HaveOccurred())
-					Expect(builds).To(ConsistOf(thirdBuild))
+					Expect(builds).To(ConsistOf(secondBuild, thirdBuild))
 				})
 			})
 
 			Context("specifying only to", func() {
-				It("returns all builds before the specified id", func() {
+				It("returns all builds before and including the specified id", func() {
 					builds, _, err := team.Builds(db.Page{Limit: 50, To: secondBuild.ID()})
 					Expect(err).NotTo(HaveOccurred())
-					Expect(builds).To(ConsistOf(oneOffBuild, build))
+					Expect(builds).To(ConsistOf(oneOffBuild, build, secondBuild))
 				})
 			})
 
@@ -1415,7 +1415,7 @@ var _ = Describe("Team", func() {
 				It("returns all builds within range of ids", func() {
 					builds, _, err := team.Builds(db.Page{Limit: 50, From: build.ID(), To: thirdBuild.ID()})
 					Expect(err).NotTo(HaveOccurred())
-					Expect(builds).To(ConsistOf(secondBuild))
+					Expect(builds).To(ConsistOf(build, secondBuild, thirdBuild))
 				})
 			})
 

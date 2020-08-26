@@ -527,7 +527,7 @@ var _ = Describe("BuildFactory", func() {
 			Expect(started).To(BeTrue())
 		})
 
-		It("returns builds in the given timespan", func() {
+		It("returns builds started in the given timespan", func() {
 			page := db.Page{
 				Limit:   10,
 				From:    int(time.Now().Unix() - 10000),
@@ -536,7 +536,7 @@ var _ = Describe("BuildFactory", func() {
 			}
 			builds, _, err := buildFactory.AllBuilds(page)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(builds)).To(Equal(3))
+			Expect(len(builds)).To(Equal(2))
 		})
 
 		Describe("with a future date as Page.From", func() {
