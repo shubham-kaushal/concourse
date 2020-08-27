@@ -59,12 +59,12 @@ func (s *Server) ListBuilds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pagination.Next != nil {
-		s.addNextLink(w, *pagination.Next)
+	if pagination.Older != nil {
+		s.addNextLink(w, *pagination.Older)
 	}
 
-	if pagination.Previous != nil {
-		s.addPreviousLink(w, *pagination.Previous)
+	if pagination.Newer != nil {
+		s.addPreviousLink(w, *pagination.Newer)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

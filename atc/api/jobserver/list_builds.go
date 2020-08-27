@@ -72,12 +72,12 @@ func (s *Server) ListJobBuilds(pipeline db.Pipeline) http.Handler {
 			return
 		}
 
-		if pagination.Next != nil {
-			s.addNextLink(w, teamName, pipeline.Name(), jobName, *pagination.Next)
+		if pagination.Older != nil {
+			s.addNextLink(w, teamName, pipeline.Name(), jobName, *pagination.Older)
 		}
 
-		if pagination.Previous != nil {
-			s.addPreviousLink(w, teamName, pipeline.Name(), jobName, *pagination.Previous)
+		if pagination.Newer != nil {
+			s.addPreviousLink(w, teamName, pipeline.Name(), jobName, *pagination.Newer)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

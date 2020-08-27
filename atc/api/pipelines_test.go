@@ -1794,8 +1794,8 @@ var _ = Describe("Pipelines API", func() {
 				Context("when next/previous pages are available", func() {
 					BeforeEach(func() {
 						fakePipeline.BuildsReturns(returnedBuilds, db.Pagination{
-							Previous: &db.Page{From: 4, Limit: 2},
-							Next:     &db.Page{To: 2, Limit: 2},
+							Newer: &db.Page{From: 4, Limit: 2},
+							Older: &db.Page{To: 2, Limit: 2},
 						}, nil)
 					})
 

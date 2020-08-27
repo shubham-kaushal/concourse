@@ -9,10 +9,11 @@ type Page struct {
 }
 
 type Pagination struct {
-	Previous *Page
-	Next     *Page
+	Newer *Page
+	Older *Page
 }
 
 func newIntPtr(i int) *int {
 	return &i
 }
+

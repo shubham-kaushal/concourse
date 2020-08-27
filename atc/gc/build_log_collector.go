@@ -92,7 +92,7 @@ func (br *buildLogCollector) reapLogsOfJob(pipeline db.Pipeline,
 
 	buildsToConsiderDeleting := []db.Build{}
 
-	from := job.FirstLoggedBuildID()
+	from := job.FirstLoggedBuildID() // 1000
 	limit := br.batchSize
 	page := &db.Page{From: from, Limit: limit}
 	for page != nil {
@@ -113,7 +113,7 @@ func (br *buildLogCollector) reapLogsOfJob(pipeline db.Pipeline,
 		}
 		buildsToConsiderDeleting = append(buildsOfBatch, buildsToConsiderDeleting...)
 
-		page = pagination.Next
+		page = pagination.Newer
 	}
 
 	logger.Debug("after-first-round-filter", lager.Data{

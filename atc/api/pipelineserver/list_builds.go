@@ -58,12 +58,12 @@ func (s *Server) ListPipelineBuilds(pipeline db.Pipeline) http.Handler {
 			}
 		}
 
-		if pagination.Next != nil {
-			s.addNextLink(w, teamName, pipeline.Name(), *pagination.Next)
+		if pagination.Older != nil {
+			s.addNextLink(w, teamName, pipeline.Name(), *pagination.Older)
 		}
 
-		if pagination.Previous != nil {
-			s.addPreviousLink(w, teamName, pipeline.Name(), *pagination.Previous)
+		if pagination.Newer != nil {
+			s.addPreviousLink(w, teamName, pipeline.Name(), *pagination.Newer)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

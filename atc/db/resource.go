@@ -502,10 +502,11 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 	newestRCVCheckOrder := checkOrderRVs[0]
 	oldestRCVCheckOrder := checkOrderRVs[len(checkOrderRVs)-1]
 
-	var prevRCVId sql.NullInt64
-	var nextRCVId sql.NullInt64
+	var newerRCVId sql.NullInt64
+	var olderRCVId sql.NullInt64
 
 	// SELECT ( SELECT ...) generates a null value if row isn't found
+	// TODO: maybe switch to check sql.ErrNoRows
 	err = tx.QueryRow(`
 		SELECT (
 			SELECT v.id
@@ -514,7 +515,7 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 			ORDER BY v.check_order DESC
 			LIMIT 1
 		)
-	`, r.id, oldestRCVCheckOrder.CheckOrder).Scan(&nextRCVId)
+	`, r.id, oldestRCVCheckOrder.CheckOrder).Scan(&olderRCVId)
 	if err != nil {
 		return nil, Pagination{}, false, err
 	}
@@ -527,7 +528,7 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 			ORDER BY v.check_order ASC
 			LIMIT 1
 		)
-	`, r.id, newestRCVCheckOrder.CheckOrder).Scan(&prevRCVId)
+	`, r.id, newestRCVCheckOrder.CheckOrder).Scan(&newerRCVId)
 	if err != nil {
 		return nil, Pagination{}, false, err
 	}
@@ -539,16 +540,16 @@ func (r *resource) Versions(page Page, versionFilter atc.Version) ([]atc.Resourc
 
 	var pagination Pagination
 
-	if prevRCVId.Valid {
-		pagination.Previous = &Page{
-			From:  int(prevRCVId.Int64),
+	if newerRCVId.Valid {
+		pagination.Newer = &Page{
+			From:  int(newerRCVId.Int64),
 			Limit: page.Limit,
 		}
 	}
 
-	if nextRCVId.Valid {
-		pagination.Next = &Page{
-			To:    int(nextRCVId.Int64),
+	if olderRCVId.Valid {
+		pagination.Older = &Page{
+			To:    int(olderRCVId.Int64),
 			Limit: page.Limit,
 		}
 	}

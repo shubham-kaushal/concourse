@@ -62,12 +62,12 @@ func (s *Server) ListTeamBuilds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pagination.Next != nil {
-		s.addNextLink(w, teamName, *pagination.Next)
+	if pagination.Older != nil {
+		s.addNextLink(w, teamName, *pagination.Older)
 	}
 
-	if pagination.Previous != nil {
-		s.addPreviousLink(w, teamName, *pagination.Previous)
+	if pagination.Newer != nil {
+		s.addPreviousLink(w, teamName, *pagination.Newer)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

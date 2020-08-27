@@ -1081,8 +1081,8 @@ var _ = Describe("Team", func() {
 				builds, pagination, err := team.PrivateAndPublicBuilds(db.Page{Limit: 2})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(pagination.Next).To(BeNil())
-				Expect(pagination.Previous).To(BeNil())
+				Expect(pagination.Older).To(BeNil())
+				Expect(pagination.Newer).To(BeNil())
 				Expect(builds).To(BeEmpty())
 			})
 		})
@@ -1130,10 +1130,10 @@ var _ = Describe("Team", func() {
 				Expect(builds[0]).To(Equal(allBuilds[4]))
 				Expect(builds[1]).To(Equal(allBuilds[3]))
 
-				Expect(pagination.Previous).To(BeNil())
-				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[3].ID() - 1, Limit: 2}))
+				Expect(pagination.Newer).To(BeNil())
+				Expect(pagination.Older).To(Equal(&db.Page{To: allBuilds[2].ID(), Limit: 2}))
 
-				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Next)
+				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Older)
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(len(builds)).To(Equal(2))
@@ -1141,26 +1141,26 @@ var _ = Describe("Team", func() {
 				Expect(builds[0]).To(Equal(allBuilds[2]))
 				Expect(builds[1]).To(Equal(allBuilds[1]))
 
-				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[2].ID() + 1, Limit: 2}))
-				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[1].ID() - 1, Limit: 2}))
+				Expect(pagination.Newer).To(Equal(&db.Page{From: allBuilds[3].ID(), Limit: 2}))
+				Expect(pagination.Older).To(Equal(&db.Page{To: allBuilds[0].ID(), Limit: 2}))
 
-				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Next)
+				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Older)
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(len(builds)).To(Equal(1))
 				Expect(builds[0]).To(Equal(allBuilds[0]))
 
-				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[0].ID() + 1, Limit: 2}))
-				Expect(pagination.Next).To(BeNil())
+				Expect(pagination.Newer).To(Equal(&db.Page{From: allBuilds[1].ID(), Limit: 2}))
+				Expect(pagination.Older).To(BeNil())
 
-				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Previous)
+				builds, pagination, err = team.PrivateAndPublicBuilds(*pagination.Newer)
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(len(builds)).To(Equal(2))
 				Expect(builds[0]).To(Equal(allBuilds[2]))
 				Expect(builds[1]).To(Equal(allBuilds[1]))
-				Expect(pagination.Previous).To(Equal(&db.Page{From: allBuilds[2].ID() + 1, Limit: 2}))
-				Expect(pagination.Next).To(Equal(&db.Page{To: allBuilds[1].ID() - 1, Limit: 2}))
+				Expect(pagination.Newer).To(Equal(&db.Page{From: allBuilds[3].ID(), Limit: 2}))
+				Expect(pagination.Older).To(Equal(&db.Page{To: allBuilds[0].ID(), Limit: 2}))
 			})
 
 			Context("when there are builds that belong to different teams", func() {

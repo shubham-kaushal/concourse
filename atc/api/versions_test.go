@@ -402,8 +402,8 @@ var _ = Describe("Versions API", func() {
 						BeforeEach(func() {
 							fakePipeline.NameReturns("some-pipeline")
 							fakeResource.VersionsReturns(returnedVersions, db.Pagination{
-								Previous: &db.Page{From: 4, Limit: 2},
-								Next:     &db.Page{To: 2, Limit: 2},
+								Newer: &db.Page{From: 4, Limit: 2},
+								Older: &db.Page{To: 2, Limit: 2},
 							}, true, nil)
 						})
 
